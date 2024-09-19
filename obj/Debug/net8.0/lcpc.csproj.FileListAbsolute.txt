@@ -218,3 +218,5 @@ c:\Projetos\lcpc\api\bin\Debug\net8.0\Microsoft.IdentityModel.Protocols.dll
 c:\Projetos\lcpc\api\bin\Debug\net8.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
 c:\Projetos\lcpc\api\bin\Debug\net8.0\Microsoft.IdentityModel.Tokens.dll
 c:\Projetos\lcpc\api\bin\Debug\net8.0\System.IdentityModel.Tokens.Jwt.dll
+c:\Projetos\lcpc\api\obj\Debug\net8.0\lcpc.sourcelink.json
+C:\Projetos\lcpc\api\bin\Debug\net8.0\Bogus.dll

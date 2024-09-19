@@ -4,6 +4,7 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MyProject.Enums;
 using MyProject.Models;
 using MyProject.Services.Interfaces;
 
@@ -58,7 +59,7 @@ namespace MyProject.Controllers
                 ShippingDate = orderDto.ShippingDate,
                 CreationDate = DateTime.UtcNow,
                 ExpectedDeliveryDate = orderDto.ExpectedDeliveryDate,
-                State = orderDto.State,
+                Status = orderDto.Status,
                 NInstallments = orderDto.NInstallments,
                 FkUserId = Guid.Parse(userId),  
                 FkClientId = orderDto.FkClientId
@@ -104,11 +105,41 @@ namespace MyProject.Controllers
             return NoContent();
         }
 
-        [HttpGet("report/orders-by-period")]
-        public async Task<IActionResult> GetOrderReport([FromQuery] DateTime startDate, [FromQuery] DateTime endDate, [FromQuery] string status)
+        [HttpGet("report")]
+        public async Task<IActionResult> GetOrdersReport([FromQuery] DateTime startDate, [FromQuery] DateTime endDate, [FromQuery] OrderStatus? status = null)
         {
-            var report = await _orderService.GetOrderReportAsync(startDate, endDate, status);
-            return Ok(report);
+            var result = await _orderService.GetOrdersReportAsync(startDate, endDate, status);
+            
+            if (!result.Success)
+                return BadRequest(result.Message);
+            
+            return Ok(result.Data);
+        }
+
+        [HttpGet("billing-report")]
+        public async Task<IActionResult> GetBillingReport([FromQuery] DateTime startDate, [FromQuery] DateTime endDate, [FromQuery] Guid? clientId)
+        {
+            if (startDate == default || endDate == default)
+            {
+                return BadRequest("Start date and end date must be provided.");
+            }
+
+            var result = await _orderService.GenerateOrderBillingReportAsync(startDate, endDate, clientId);
+            
+            if (!result.Success)
+                return BadRequest(result.Message);
+
+            return Ok(result.Data);
+        }
+
+        [HttpGet("top-sold-products")]
+        public async Task<IActionResult> GetTopSoldProductsReport([FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate, [FromQuery] ProductTypeEnum? productType)
+        {
+            var result = await _orderService.GenerateTopSoldProductsReportAsync(startDate, endDate, productType);
+            if (!result.Success)
+                return BadRequest(result.Message);
+
+            return Ok(result.Data);
         }
     }
 }
@@ -128,8 +159,8 @@ public class OrderCreateDto
     [Required]
     public DateTime ExpectedDeliveryDate { get; set; }
 
-    [Required, StringLength(50)]
-    public string State { get; set; }
+    [Required]
+    public OrderStatus Status { get; set; }
 
     [Required]
     public int NInstallments { get; set; }
@@ -157,3 +188,23 @@ public class OrderReportDto
     public string Status { get; set; }
     public List<string> Products { get; set; }
 }
+
+// OrderBillingReportDto.cs
+public class OrderBillingReportDto
+{
+    public string ClientName { get; set; }
+    public int TotalOrders { get; set; }
+    public decimal TotalOrderValue { get; set; }
+    public decimal AverageOrderValue { get; set; }
+}
+
+public class ProductSalesReportDto
+{
+    public string ProductName { get; set; }
+    public int QuantitySold { get; set; }
+    public decimal TotalSalesValue { get; set; }
+    public decimal AverageSalesValue { get; set; }
+    public string ProductType { get; set; }  // Para exibir o tipo do produto
+}
+
+

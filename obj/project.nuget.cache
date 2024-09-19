@@ -1,10 +1,11 @@
 {
   "version": 2,
-  "dgSpecHash": "r8iwilvqZ4c=",
+  "dgSpecHash": "HwonBYjYX/w=",
   "success": true,
-  "projectFilePath": "C:\\Projetos\\lcpc\\api\\lcpc.csproj",
+  "projectFilePath": "c:\\Projetos\\lcpc\\api\\lcpc.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\thean\\.nuget\\packages\\bcrypt.net-next\\4.0.3\\bcrypt.net-next.4.0.3.nupkg.sha512",
+    "C:\\Users\\thean\\.nuget\\packages\\bogus\\35.6.1\\bogus.35.6.1.nupkg.sha512",
     "C:\\Users\\thean\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",
     "C:\\Users\\thean\\.nuget\\packages\\microsoft.aspnetcore.authentication.jwtbearer\\8.0.8\\microsoft.aspnetcore.authentication.jwtbearer.8.0.8.nupkg.sha512",
     "C:\\Users\\thean\\.nuget\\packages\\microsoft.aspnetcore.openapi\\8.0.6\\microsoft.aspnetcore.openapi.8.0.6.nupkg.sha512",

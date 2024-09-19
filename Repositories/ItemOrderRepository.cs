@@ -53,5 +53,13 @@ namespace MyProject.Repositories
                 await _context.SaveChangesAsync();
             }
         }
+
+        public async Task<List<ItemOrder>> GetByOrderIdAsync(Guid orderId)
+        {
+            return await _context.ItensOrder
+                .Where(item => item.FkOrderId == orderId)
+                .Include(item => item.Product)  // Inclui o produto relacionado para acesso ao nome
+                .ToListAsync();
+        }
     }
 }

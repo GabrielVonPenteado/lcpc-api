@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using MyProject.Enums;
 
 namespace MyProject.Models;
 
@@ -27,8 +28,8 @@ public class Order : BaseModel
     [Required]
     public DateTime ExpectedDeliveryDate { get; set; }
 
-    [Required, StringLength(50)]
-    public string State { get; set; }
+    [Required]
+    public OrderStatus Status { get; set; }
 
     [Required]
     public int NInstallments { get; set; }

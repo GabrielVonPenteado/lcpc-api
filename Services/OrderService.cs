@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using MyProject.Enums;
 using MyProject.Models;
 using MyProject.Repositories.Interfaces;
 using MyProject.Services.Interfaces;
@@ -11,11 +12,15 @@ namespace MyProject.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly IOrderRepository _orderRepository;
+        private readonly IClientRepository _clientRepository;
+        private readonly IItemOrderRepository _itemOrderRepository;
 
-        public OrderService(IOrderRepository orderRepository, ApplicationDbContext context)
+        public OrderService(IOrderRepository orderRepository, ApplicationDbContext context, IClientRepository clientRepository, IItemOrderRepository itemOrderRepository)
         {
             _orderRepository = orderRepository;
             _context = context;
+            _clientRepository = clientRepository;
+            _itemOrderRepository = itemOrderRepository;
         }
 
         public async Task<ServiceResult<IEnumerable<Order>>> GetAllAsync()
@@ -100,7 +105,7 @@ namespace MyProject.Services
             existingOrder.ShippingDate = orderDto.ShippingDate;
             existingOrder.DeliveryDate = orderDto.DeliveryDate;
             existingOrder.ExpectedDeliveryDate = orderDto.ExpectedDeliveryDate;
-            existingOrder.State = orderDto.State;
+            existingOrder.Status = orderDto.Status;
             existingOrder.NInstallments = orderDto.NInstallments;
             existingOrder.FkUserId = orderDto.FkUserId;
             existingOrder.FkClientId = orderDto.FkClientId;
@@ -135,10 +140,91 @@ namespace MyProject.Services
             result.Message = "Order deleted successfully.";
             return result;
         }
+    
 
-        public async Task<IEnumerable<OrderReportDto>> GetOrderReportAsync(DateTime startDate, DateTime endDate, string status)
+    public async Task<ServiceResult<List<OrderReportDto>>> GetOrdersReportAsync(DateTime startDate, DateTime endDate, OrderStatus? status = null)
+    {
+        var orders = await _orderRepository.GetAllAsync();
+        
+        var filteredOrders = orders.Where(o => o.CreationDate >= startDate && o.CreationDate <= endDate);
+
+        if (status.HasValue)
         {
-            return await _orderRepository.GetOrderReportAsync(startDate, endDate, status);
+            filteredOrders = filteredOrders.Where(o => o.Status == status.Value);
+        }
+
+        var report = new List<OrderReportDto>();
+
+        foreach (var order in filteredOrders)
+        {
+            var client = await _clientRepository.GetByIdAsync(order.FkClientId);
+            var items = await _itemOrderRepository.GetByOrderIdAsync(order.Id);
+            var productNames = items.Select(i => i.Product.Name).ToList();
+
+            report.Add(new OrderReportDto
+            {
+                OrderId = order.Id,
+                ClientName = client.Name,
+                OrderDate = order.CreationDate,
+                TotalValue = order.TotalValue,
+                Status = order.Status.ToString(),
+                Products = productNames
+            });
+        }
+
+        return new ServiceResult<List<OrderReportDto>> { Data = report, Success = true };
+        }
+
+        public async Task<ServiceResult<IEnumerable<OrderBillingReportDto>>> GenerateOrderBillingReportAsync(DateTime? startDate, DateTime? endDate, Guid? clientId)
+        {
+            // Buscar pedidos pelo intervalo de datas e cliente específico
+            var orders = await _orderRepository.GetOrdersWithClientByDateRangeAsync(startDate, endDate, clientId);
+
+            if (orders == null || !orders.Any())
+            {
+                return new ServiceResult<IEnumerable<OrderBillingReportDto>>
+                {
+                    Success = false,
+                    Message = "Nenhum pedido encontrado para os critérios selecionados."
+                };
+            }
+
+            // Agrupar por Cliente para gerar o relatório de faturamento por cliente
+            var report = orders
+                .GroupBy(o => o.Client.Id)  // Agrupa por ID do cliente para evitar duplicidades
+                .Select(group => new OrderBillingReportDto
+                {
+                    ClientName = group.First().Client.Name,  // Nome do cliente (pegando o primeiro nome do grupo)
+                    TotalOrders = group.Count(),  // Total de pedidos
+                    TotalOrderValue = group.Sum(o => o.TotalValue),  // Soma total do valor dos pedidos
+                    AverageOrderValue = group.Average(o => o.TotalValue)  // Média dos valores dos pedidos
+                })
+                .ToList();
+
+            return new ServiceResult<IEnumerable<OrderBillingReportDto>>
+            {
+                Success = true,
+                Data = report
+            };
+        }
+        public async Task<ServiceResult<IEnumerable<ProductSalesReportDto>>> GenerateTopSoldProductsReportAsync(DateTime? startDate, DateTime? endDate, ProductTypeEnum? productType)
+        {
+            var products = await _orderRepository.GetTopSoldProductsAsync(startDate, endDate, productType);
+
+            if (products == null || !products.Any())
+            {
+                return new ServiceResult<IEnumerable<ProductSalesReportDto>>
+                {
+                    Success = false,
+                    Message = "Nenhum produto encontrado para os critérios selecionados."
+                };
+            }
+
+            return new ServiceResult<IEnumerable<ProductSalesReportDto>>
+            {
+                Success = true,
+                Data = products
+            };
         }
     }
 }

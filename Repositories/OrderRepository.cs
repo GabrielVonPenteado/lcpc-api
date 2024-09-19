@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using MyProject.Enums;
 using MyProject.Models;
 using MyProject.Repositories.Interfaces;
 using System;
@@ -20,15 +21,32 @@ namespace MyProject.Repositories
         {
             return await _context.Orders
                                  .AsNoTracking()
-                                 .Where(o => o.DeletedAt == null) // Soft delete condition
+                                 .Where(o => o.DeletedAt == null)
                                  .ToListAsync();
         }
 
+        public async Task<IEnumerable<Order>> GetOrdersWithClientByDateRangeAsync(DateTime? startDate, DateTime? endDate, Guid? clientId)
+        {
+            var query = _context.Orders
+                .Include(o => o.Client)
+                .Where(o => o.DeletedAt == null && o.Client != null);
+
+            if (startDate.HasValue)
+                query = query.Where(o => o.CreationDate >= startDate.Value.ToUniversalTime());
+
+            if (endDate.HasValue)
+                query = query.Where(o => o.CreationDate <= endDate.Value.ToUniversalTime());
+
+            if (clientId.HasValue)
+                query = query.Where(o => o.FkClientId == clientId.Value);
+
+            return await query.AsNoTracking().ToListAsync();
+        }
         public async Task<Order> GetByIdAsync(Guid id)
         {
             return await _context.Orders
                                  .AsNoTracking()
-                                 .FirstOrDefaultAsync(o => o.Id == id && o.DeletedAt == null); // Soft delete condition
+                                 .FirstOrDefaultAsync(o => o.Id == id && o.DeletedAt == null);
         }
 
         public async Task AddAsync(Order order)
@@ -48,35 +66,75 @@ namespace MyProject.Repositories
             var order = await _context.Orders.FindAsync(id);
             if (order != null)
             {
-                order.SetDeletedAt(); // Soft delete
+                order.SetDeletedAt();
                 _context.Orders.Update(order);
                 await _context.SaveChangesAsync();
             }
         }
 
-        public async Task<IEnumerable<OrderReportDto>> GetOrderReportAsync(DateTime startDate, DateTime endDate, string status)
+        public async Task<List<OrderReportDto>> GetOrdersByPeriodAsync(DateTime startDate, DateTime endDate, OrderStatus? status = null)
         {
             var query = _context.Orders
-                .Where(order => order.CreationDate >= startDate && order.CreationDate <= endDate);
+                .Include(o => o.Client)
+                .Include(o => o.ItensOrder)
+                .ThenInclude(io => io.Product)
+                .Where(o => o.CreationDate >= startDate && o.CreationDate <= endDate);
 
-            if (!string.IsNullOrEmpty(status))
+            if (status.HasValue)
             {
-                query = query.Where(order => order.State == status);
+                query = query.Where(o => o.Status == status);
             }
 
-            var report = await query
-                .Select(order => new OrderReportDto
+            var orders = await query
+                .Select(o => new OrderReportDto
                 {
-                    OrderId = order.Id,
-                    ClientName = order.Client.Name,
-                    OrderDate = order.CreationDate,
-                    TotalValue = order.TotalValue,
-                    Status = order.State,
-                    Products = order.ItensOrder.Select(item => item.Product.Name).ToList()
+                    OrderId = o.Id,
+                    ClientName = o.Client.Name,
+                    OrderDate = o.CreationDate,
+                    TotalValue = o.TotalValue,
+                    Status = o.Status.ToString(),
+                    Products = o.ItensOrder.Select(io => io.Product.Name).ToList()
                 })
                 .ToListAsync();
 
-            return report;
+            return orders;
+        }
+        public async Task<IEnumerable<ProductSalesReportDto>> GetTopSoldProductsAsync(DateTime? startDate, DateTime? endDate, ProductTypeEnum? productType)
+        {
+            var query = _context.ItensOrder
+                .Include(io => io.Product)
+                .Include(io => io.Order)
+                .Where(io => io.Order.DeletedAt == null);
+
+            if (startDate.HasValue)
+            {
+                query = query.Where(io => io.Order.CreationDate >= startDate);
+            }
+
+            if (endDate.HasValue)
+            {
+                query = query.Where(io => io.Order.CreationDate <= endDate);
+            }
+
+            if (productType.HasValue)
+            {
+                query = query.Where(io => io.Product.ProductType == productType);
+            }
+
+            var result = await query
+                .GroupBy(io => new { io.Product.Name, io.Product.ProductType })
+                .Select(g => new ProductSalesReportDto
+                {
+                    ProductName = g.Key.Name,
+                    ProductType = g.Key.ProductType.ToString(),
+                    QuantitySold = g.Sum(io => io.Quantity),
+                    TotalSalesValue = g.Sum(io => io.Quantity * io.ItemValue),
+                    AverageSalesValue = g.Average(io => io.ItemValue)
+                })
+                .OrderByDescending(r => r.QuantitySold)
+                .ToListAsync();
+
+            return result;
         }
     }
 }

@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Projetos\\lcpc\\api\\lcpc.csproj": {}
+    "c:\\Projetos\\lcpc\\api\\lcpc.csproj": {}
   },
   "projects": {
-    "C:\\Projetos\\lcpc\\api\\lcpc.csproj": {
+    "c:\\Projetos\\lcpc\\api\\lcpc.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Projetos\\lcpc\\api\\lcpc.csproj",
+        "projectUniqueName": "c:\\Projetos\\lcpc\\api\\lcpc.csproj",
         "projectName": "lcpc",
-        "projectPath": "C:\\Projetos\\lcpc\\api\\lcpc.csproj",
+        "projectPath": "c:\\Projetos\\lcpc\\api\\lcpc.csproj",
         "packagesPath": "C:\\Users\\thean\\.nuget\\packages\\",
-        "outputPath": "C:\\Projetos\\lcpc\\api\\obj\\",
+        "outputPath": "c:\\Projetos\\lcpc\\api\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\thean\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -46,6 +46,10 @@
             "BCrypt.Net-Next": {
               "target": "Package",
               "version": "[4.0.3, )"
+            },
+            "Bogus": {
+              "target": "Package",
+              "version": "[35.6.1, )"
             },
             "Microsoft.AspNetCore.Authentication.JwtBearer": {
               "target": "Package",

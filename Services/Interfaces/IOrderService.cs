@@ -1,3 +1,4 @@
+using MyProject.Enums;
 using MyProject.Models;
 using System;
 using System.Collections.Generic;
@@ -12,6 +13,8 @@ namespace MyProject.Services.Interfaces
         Task<ServiceResult> AddAsync(Order order);
         Task<ServiceResult> UpdateAsync(OrderUpdateDto orderDto);
         Task<ServiceResult> DeleteAsync(Guid id);
-        Task<IEnumerable<OrderReportDto>> GetOrderReportAsync(DateTime startDate, DateTime endDate, string status);
+        Task<ServiceResult<List<OrderReportDto>>> GetOrdersReportAsync(DateTime startDate, DateTime endDate, OrderStatus? status = null);
+        Task<ServiceResult<IEnumerable<OrderBillingReportDto>>> GenerateOrderBillingReportAsync(DateTime? startDate, DateTime? endDate, Guid? clientId);
+        Task<ServiceResult<IEnumerable<ProductSalesReportDto>>> GenerateTopSoldProductsReportAsync(DateTime? startDate, DateTime? endDate, ProductTypeEnum? productType);
     }
 }
