@@ -140,12 +140,11 @@ namespace MyProject.Services
             result.Message = "Order deleted successfully.";
             return result;
         }
-    
 
     public async Task<ServiceResult<List<OrderReportDto>>> GetOrdersReportAsync(DateTime startDate, DateTime endDate, OrderStatus? status = null)
     {
         var orders = await _orderRepository.GetAllAsync();
-        
+
         var filteredOrders = orders.Where(o => o.CreationDate >= startDate && o.CreationDate <= endDate);
 
         if (status.HasValue)
@@ -177,7 +176,7 @@ namespace MyProject.Services
 
         public async Task<ServiceResult<IEnumerable<OrderBillingReportDto>>> GenerateOrderBillingReportAsync(DateTime? startDate, DateTime? endDate, Guid? clientId)
         {
-            // Buscar pedidos pelo intervalo de datas e cliente específico
+
             var orders = await _orderRepository.GetOrdersWithClientByDateRangeAsync(startDate, endDate, clientId);
 
             if (orders == null || !orders.Any())
@@ -189,15 +188,14 @@ namespace MyProject.Services
                 };
             }
 
-            // Agrupar por Cliente para gerar o relatório de faturamento por cliente
             var report = orders
-                .GroupBy(o => o.Client.Id)  // Agrupa por ID do cliente para evitar duplicidades
+                .GroupBy(o => o.Client.Id)  
                 .Select(group => new OrderBillingReportDto
                 {
-                    ClientName = group.First().Client.Name,  // Nome do cliente (pegando o primeiro nome do grupo)
-                    TotalOrders = group.Count(),  // Total de pedidos
-                    TotalOrderValue = group.Sum(o => o.TotalValue),  // Soma total do valor dos pedidos
-                    AverageOrderValue = group.Average(o => o.TotalValue)  // Média dos valores dos pedidos
+                    ClientName = group.First().Client.Name,  
+                    TotalOrders = group.Count(),  
+                    TotalOrderValue = group.Sum(o => o.TotalValue),  
+                    AverageOrderValue = group.Average(o => o.TotalValue)  
                 })
                 .ToList();
 
