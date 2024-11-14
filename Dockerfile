@@ -24,4 +24,4 @@ EXPOSE 8080
 ENV ASPNETCORE_URLS=http://+:8080
 
 # Comando para iniciar a aplicação
-ENTRYPOINT ["dotnet lcpc.dll"]
+CMD ASPNETCORE_URLS=http://*:$PORT dotnet lcpc.dll
