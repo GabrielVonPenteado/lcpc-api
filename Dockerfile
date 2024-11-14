@@ -3,10 +3,10 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /app
 
 # Copiar arquivos do projeto e restaurar dependências
-COPY *.csproj ./
+COPY ./*.csproj ./
 RUN dotnet restore
 
-# Copiar todo o código e publicar a aplicação
+# Copiar todo o código-fonte e publicar a aplicação
 COPY . ./
 RUN dotnet publish -c Release -o /publish
 
@@ -17,9 +17,8 @@ WORKDIR /app
 # Copiar os artefatos de build
 COPY --from=build /publish .
 
-# Expor a porta usada pela aplicação
-EXPOSE 8080
+# Definir variável de ambiente para o ASP.NET Core ouvir na porta definida pelo Heroku
+ENV ASPNETCORE_URLS=http://*:$PORT
 
 # Comando para iniciar a aplicação
-ENV ASPNETCORE_URLS http://*:$PORT
-CMD ["dotnet", "lcpc-api2.dll"]
+CMD ["dotnet", "lcpc-api2.dll"]
