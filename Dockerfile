@@ -20,8 +20,6 @@ COPY --from=build /publish .
 # Expor a porta usada pela aplicação
 EXPOSE 8080
 
-# Definir a variável de ambiente para ouvir na porta 8080 (necessária para Heroku)
-ENV ASPNETCORE_URLS=http://+:8080
-
 # Comando para iniciar a aplicação
-CMD ASPNETCORE_URLS=http://*:$PORT dotnet lcpc.dll
+ENV ASPNETCORE_URLS http://*:$PORT
+CMD ["dotnet", "lcpc-api2.dll"]
